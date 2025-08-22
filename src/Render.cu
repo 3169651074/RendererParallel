@@ -285,8 +285,8 @@ namespace renderer {
             SDL_Log("L2 cache size: %.2f KB", (double)prop.l2CacheSize / 1024);
             SDL_Log("Total constant memory: %.2f KB", (double)prop.totalConstMem / 1024);
 
-            SDL_Log("Clock rate: %d kHz", prop.clockRate);
-            SDL_Log("Memory clock rate: %d kHz", prop.memoryClockRate);
+            //SDL_Log("Clock rate: %d kHz", prop.clockRate);
+            //SDL_Log("Memory clock rate: %d kHz", prop.memoryClockRate);
 
             SDL_Log("Registers per block: %d", prop.regsPerBlock);
             SDL_Log("Max threads per block: %d", prop.maxThreadsPerBlock);

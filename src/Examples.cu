@@ -1,9 +1,23 @@
 #include <Examples.hpp>
+#include <Render.cuh>
 
 using namespace renderer;
 using namespace std;
 
 namespace {
+
+    //窗口比例
+    constexpr double ASPECT_RATIO = 16.0 / 9.0;
+    //窗口尺寸
+    constexpr Uint32 WINDOW_WIDTH = 1200;
+    constexpr Uint32 WINDOW_HEIGHT = static_cast<int>(WINDOW_WIDTH / ASPECT_RATIO);
+
+    //SDL变量
+    SDL_Window * window = nullptr;
+
+    void initSDLResources();
+    void releaseSDLResourcesImpl();
+
     void initSDLResources() {
         SDL_Log("Initializing renderer...");
         SDL_registerReleaseResources(releaseSDLResourcesImpl);

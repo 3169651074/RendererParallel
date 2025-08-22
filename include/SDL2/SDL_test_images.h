@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,10 +19,10 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-/**
+/*
  *  \file SDL_test_images.h
  *
- *  Include file for SDL test framework.
+ *  Include file for SDL life_game framework.
  *
  *  This code is a part of the SDL2_test library, not the main SDL library.
  */
@@ -44,8 +44,8 @@
 extern "C" {
 #endif
 
-/**
- *Type for test images.
+/*
+ *Type for life_game images.
  */
 typedef struct SDLTest_SurfaceImage_s {
   int width;
@@ -54,7 +54,7 @@ typedef struct SDLTest_SurfaceImage_s {
   const char *pixel_data;
 } SDLTest_SurfaceImage_t;
 
-/* SDLTest images */
+/* Test images */
 SDL_Surface *SDLTest_ImageBlit(void);
 SDL_Surface *SDLTest_ImageBlitColor(void);
 SDL_Surface *SDLTest_ImageBlitAlpha(void);

@@ -12,6 +12,7 @@
 #include <memory>
 #include <cmath>
 #include <cstring>
+#include <cstdlib>
 #include <random>
 #include <algorithm>
 #include <limits>
@@ -138,7 +139,7 @@ namespace renderer {
     //检查cuda库函数返回值
     static inline void _handle_error0(cudaError_t err, const char * file, const char * function, int line, TaskOnError task = TaskOnError::EXIT_PROGRAM) {
         if (err != cudaSuccess) {
-            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "CUDA Error: %s, at function %s: in file %s line %d", cudaGetErrorString(err), function, file, line);
+            SDL_Log("CUDA Error: %s, at function %s: in file %s line %d", cudaGetErrorString(err), function, file, line);
             exit(EXIT_FAILURE);
         }
     }

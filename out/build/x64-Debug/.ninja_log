@@ -1,0 +1,10 @@
+# ninja log v6
+27	3174	7775726757857235	CMakeFiles/CUDA-Test.dir/src/Global.cu.obj	9e9adfe80fe0044f
+42	3395	7775726758007753	CMakeFiles/CUDA-Test.dir/src/Main.cu.obj	b0170c0c501a3cd7
+34	5949	7775726757927477	CMakeFiles/CUDA-Test.dir/src/Kernel.cu.obj	1f9df1b1c5be09da
+11	3340	7775726757701329	CMakeFiles/CUDA-Test.dir/src/Camera.cu.obj	58622f5dbbfdfe33
+60	3348	7775726758188382	CMakeFiles/CUDA-Test.dir/src/util/Matrix.cu.obj	dce7b5b412a73936
+20	3514	7775726757781605	CMakeFiles/CUDA-Test.dir/src/Examples.cu.obj	f7a0afdf879e1fc6
+50	3540	7775726758088030	CMakeFiles/CUDA-Test.dir/src/Render.cu.obj	745a56dc9290d2ae
+5950	6291	7775726817091729	CMakeFiles/CUDA-Test.dir/cmake_device_link.obj	1019e57db665bb8e
+6	170	7775727404263136	build.ninja	e887eab9212d0bbf
