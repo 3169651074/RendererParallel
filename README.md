@@ -2,7 +2,7 @@
 A simple ray tracer implemented by pure CUDA
 
 ## Build
-此仓库中包含的源代码可直接在Windows和Linux上编译，编译需要安装CUDA Toolkit
+此仓库中包含的源代码可直接在Windows和Linux上编译，确保NVIDA显卡驱动已经更新到最新版，并前往NVIDIA官网下载安装CUDA Toolkit
 
 ### Windows
 1. 无论使用什么工具编译，都必须使用MSVC，因此需要确保Visual Studio已经安装，可以使用Visual Stuido Installer --> 修改。查看工具集的安装情况。 
