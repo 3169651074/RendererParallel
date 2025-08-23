@@ -1,6 +1,6 @@
 #在Windows上使用MSVC编译
 #在Linux上需要添加编译参数-DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.9/bin/nvcc
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.31)
 set(EXECUTABLE_NAME "RendererParallel")
 project(${EXECUTABLE_NAME} LANGUAGES CUDA)
 
@@ -61,9 +61,10 @@ add_executable(${EXECUTABLE_NAME} #${SRCS}
 if (WIN32)
     #MSVC编译器必须指定以UTF-8编码读取文件，否则在Windows上需要将所有文件的编码设置为UTF-8 with BOM
     target_compile_options(${EXECUTABLE_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/utf-8>)
-    #必须启用多文件链接支持
-    set_target_properties(${EXECUTABLE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 endif ()
+
+#必须启用多文件链接支持
+set_target_properties(${EXECUTABLE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 #链接SDL2库
 if (WIN32)

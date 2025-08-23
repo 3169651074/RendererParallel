@@ -92,8 +92,6 @@ namespace renderer {
                         spheres.emplace_back(MaterialType::METAL, metalIndex, center, 0.2);
                         metalIndex++;
                     } else {
-                        //roughs.emplace_back(Color3(0.9, 0.9, 0.9));
-                        //spheres.emplace_back(MaterialType::ROUGH, roughIndex, center, 0.2);
                         dielectrics.emplace_back(1.5);
                         spheres.emplace_back(MaterialType::DIELECTRIC, 0, center, 0.2);
                         roughIndex++;
@@ -146,9 +144,9 @@ namespace renderer {
 
         Camera cam(
                 WINDOW_WIDTH, WINDOW_HEIGHT,
-                Color3(0.7, 0.8, 1.0),
+                Color3(0.7, 0.8, 0.9),
                 Point3(0.0, 2.0, 10.0), Point3(0.0, 2.0, 0.0),
-                80, 0.0, Range(0.0, 1.0), 1,
+                80, 0.0, Range(0.0, 1.0), 100,
                 0.5, 10, Vec3(0.0, 1.0, 0.0)
         );
         SDL_Log("%s", cam.toString().c_str());
@@ -187,6 +185,12 @@ namespace renderer {
                 Triangle(MaterialType::ROUGH, 2, Point3(4.0, 0.0, 0.0), Point3(5.5, 2.0, 0.0), Point3(4.0, 0.0, 3.0))
         };
 
+#ifdef SAMPLE_LIGHT
+        const std::pair<PrimitiveType, size_t> directSampleList[] = {
+                {PrimitiveType::PARALLELOGRAM, 0}
+        };
+#endif
+
         renderer.commitSceneData(
                 roughs, arrayLengthOnPos(roughs),
                 metals, arrayLengthOnPos(metals),
@@ -199,19 +203,86 @@ namespace renderer {
                 nullptr, 0
         );
 
-        //renderer.renderFrame(&cam, window);
-        //SDL_Delay(1000 * 2);
+#ifdef SAMPLE_LIGHT
+        renderer.setDirectSampleObject(directSampleList, arrayLengthOnPos(directSampleList));
+#endif
 
-        for (size_t i = 0; i < 50; i++) {
-            cam.shiftCameraPosition(std::array<double, 3>{0.1, 0.1, 0.1}, std::array<double, 3>{0.0, 0.0, 0.0});
-            renderer.renderFrame(&cam, window, false);
-        }
+        renderer.renderFrame(&cam, window);
+        SDL_Delay(1000 * 2);
+
+//        SDL_Event event{};
+//        bool isQuit = false;
+//
+//        std::array<double, 3> centerShift = {};
+//        std::array<double, 3> targetShift = {};
+//
+//        SDL_SetRelativeMouseMode(SDL_TRUE); 开启相对鼠标模式（锁定+隐藏光标）
+//        while (!isQuit) {
+//            while (SDL_PollEvent(&event)) {
+//                if (event.type == SDL_QUIT) isQuit = true;
+//
+//                if (event.type == SDL_KEYDOWN) {
+//                    const SDL_Keycode keycode = event.key.keysym.sym;
+//                    switch (keycode) {
+//                        case SDLK_a:
+//                            centerShift[0] = -0.1;
+//                            targetShift[0] = -0.1;
+//                            break;
+//                        case SDLK_d:
+//                            centerShift[0] = 0.1;
+//                            targetShift[0] = 0.1;
+//                            break;
+//                        case SDLK_w:
+//                            centerShift[2] = -0.1;
+//                            targetShift[2] = -0.1;
+//                            break;
+//                        case SDLK_s:
+//                            centerShift[2] = 0.1;
+//                            targetShift[2] = 0.1;
+//                            break;
+//                        case SDLK_SPACE:
+//                            centerShift[1] = 0.1;
+//                            targetShift[1] = 0.1;
+//                            break;
+//                        case SDLK_LSHIFT:
+//                            centerShift[1] = -0.1;
+//                            targetShift[1] = -0.1;
+//                            break;
+//                        default:;
+//                    }
+//                }
+//
+//                if (event.type == SDL_KEYUP) {
+//                    centerShift[0] = targetShift[0] = 0.0;
+//                    centerShift[1] = targetShift[1] = 0.0;
+//                    centerShift[2] = targetShift[2] = 0.0;
+//                }
+//
+//                if (event.type == SDL_MOUSEBUTTONDOWN) {
+//                    if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+//                        SDL_SetRelativeMouseMode(SDL_FALSE);
+//                        targetShift[1] = 0.0;
+//                    } else {
+//                        SDL_SetRelativeMouseMode(SDL_TRUE);
+//                    }
+//                }
+//
+//                if (event.type == SDL_MOUSEMOTION && SDL_GetRelativeMouseMode() == SDL_TRUE) {
+//                    int dx = event.motion.xrel; // 水平方向位移
+//                    int dy = event.motion.yrel; // 竖直方向位移
+//                    targetShift[1] = dy / -100.0;
+//                }
+//                cam.shiftCameraPosition(centerShift, targetShift);
+//            }
+//            renderer.renderFrame(&cam, window, false);
+//        }
 
         renderer.freeSceneData();
         releaseSDLResourcesImpl();
     }
 
     void Examples::test03() {
+        //SDL_Log和clog都默认输出到stderr，clog缓冲，cerr不缓冲
         initSDLResources();
         Renderer::printDeviceInfo();
         Renderer renderer;
@@ -221,7 +292,7 @@ namespace renderer {
                 Color3(),
                 Point3(278, 278, -600), Point3(278, 278, 0),
                 80, 0.0, Range(0.0, 1.0), 10,
-                0.5, 10, Vec3(0.0, 1.0, 0.0)
+                0.5, 50, Vec3(0.0, 1.0, 0.0)
         );
 
         //材质列表
@@ -236,7 +307,7 @@ namespace renderer {
         };
 
         const DiffuseLight diffuseLights[] = {
-                DiffuseLight(Color3(15.0, 15.0, 15.0))
+                DiffuseLight(Color3(25.0, 25.0, 25.0))
         };
 
         const Dielectric dielectrics[] = {

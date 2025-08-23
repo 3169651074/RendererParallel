@@ -6,21 +6,15 @@
 # It is included in the main 'build.ninja'.
 
 # =============================================================================
-# Project: CUDA-Test
+# Project: RendererParallel
 # Configurations: Debug
 # =============================================================================
 # =============================================================================
 
 #############################################
-# localized /showIncludes string
-
-msvc_deps_prefix = 注意: 包含文件:  
-
-
-#############################################
 # Rule for compiling CUDA files.
 
-rule CUDA_COMPILER__CUDA-Test_unscanned_Debug
+rule CUDA_COMPILER__RendererParallel_unscanned_Debug
   depfile = $DEP_FILE
   deps = gcc
   command = ${LAUNCHER}${CODE_CHECK}C:\PROGRA~1\NVIDIA~2\CUDA\v13.0\bin\nvcc.exe -forward-unknown-to-host-compiler $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -x cu -rdc=true -c $in -o $out -Xcompiler=-Fd$TARGET_COMPILE_PDB,-FS
@@ -30,7 +24,7 @@ rule CUDA_COMPILER__CUDA-Test_unscanned_Debug
 #############################################
 # Rule for linking CUDA executable.
 
-rule CUDA_EXECUTABLE_DEVICE_LINKER__CUDA-Test_Debug
+rule CUDA_EXECUTABLE_DEVICE_LINKER__RendererParallel_Debug
   command = C:\PROGRA~1\NVIDIA~2\CUDA\v13.0\bin\nvcc.exe -forward-unknown-to-host-compiler $LANGUAGE_COMPILE_FLAGS $LINK_FLAGS -Wno-deprecated-gpu-targets -shared -dlink $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES -Xcompiler=-Fd$TARGET_COMPILE_PDB,-FS
   description = Linking CUDA executable $TARGET_FILE
   restat = $RESTAT
@@ -39,7 +33,7 @@ rule CUDA_EXECUTABLE_DEVICE_LINKER__CUDA-Test_Debug
 #############################################
 # Rule for linking CUDA executable.
 
-rule CUDA_EXECUTABLE_LINKER__CUDA-Test_Debug
+rule CUDA_EXECUTABLE_LINKER__RendererParallel_Debug
   command = C:\Windows\system32\cmd.exe /C "$PRE_LINK && "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=$OBJECT_DIR --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100261~1.0\x64\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100261~1.0\x64\mt.exe --manifests $MANIFESTS -- C:\PROGRA~1\MIB055~1\2022\COMMUN~1\VC\Tools\MSVC\1444~1.352\bin\Hostx64\x64\link.exe /nologo $in  /out:$TARGET_FILE /implib:$TARGET_IMPLIB /pdb:$TARGET_PDB /version:0.0 $LINK_FLAGS $LINK_PATH $LINK_LIBRARIES -LIBPATH:"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/lib/x64" && $POST_BUILD"
   description = Linking CUDA executable $TARGET_FILE
   restat = $RESTAT
@@ -57,7 +51,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\Lenovo\Desktop\test -BC:\Users\Lenovo\Desktop\test\out\build\x64-Debug
+  command = "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SE:\Code\Simulation\RendererParallel -BE:\Code\Simulation\RendererParallel\out\build\x64-Debug
   description = Re-running CMake...
   generator = 1
 

@@ -5,7 +5,7 @@ namespace renderer {
     void Renderer::setDirectSampleObject(const std::pair<PrimitiveType, size_t> * objectList, size_t objectListSize) {
         SDL_Log("Set direct sample object list.");
         if (objectList == nullptr) return;
-        if (dev_spheres == nullptr && dev_parallelograms == nullptr) {
+        if (!this->devPointerAvailable) {
             SDL_Log("Direct sample object list not initialized, call commitSceneData first.");
             return;
         }
