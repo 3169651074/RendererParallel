@@ -217,6 +217,7 @@ namespace renderer {
         if (isPrintInfo) {
             SDL_Log("Rendering...");
         }
+
         render<<<blocks, threads>>>(dev_renderer, dev_camera, dev_pixelBuffer, dev_stateArray);
         //cudaCheckError(cudaDeviceSynchronize());
 

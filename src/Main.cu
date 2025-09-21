@@ -2,6 +2,6 @@
 using namespace renderer;
 
 int main(int argc, char * argv[]) {
-    Examples::test03();
+    Examples::test02();
     return 0;
 }

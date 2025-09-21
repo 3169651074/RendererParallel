@@ -4,8 +4,21 @@ cmake_minimum_required(VERSION 3.31)
 set(EXECUTABLE_NAME "RendererParallel")
 project(${EXECUTABLE_NAME} LANGUAGES CUDA)
 
-set(CMAKE_CUDA_STANDARD 11)
-set(CMAKE_CUDA_ARCHITECTURES 89)
+set(CMAKE_CUDA_STANDARD 20)
+
+#自动检测本机 CUDA 架构
+#set(CMAKE_CUDA_ARCHITECTURES NATIVE)
+
+#尝试通过 nvcc 查询支持的 CUDA 架构
+#execute_process(
+#    COMMAND ${CMAKE_CUDA_COMPILER} --help
+#    OUTPUT_VARIABLE CUDA_HELP
+#)
+#string(REGEX MATCHALL "compute_[0-9]+" COMPUTE_CAPABILITIES "${CUDA_HELP}")
+#string(REPLACE "compute_" "" CUDA_ARCH_LIST "${COMPUTE_CAPABILITIES}")
+##设置检测到的架构
+#set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_LIST})
+#message(STATUS "Detected CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}")
 
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin")
 #set(LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/lib")
@@ -56,6 +69,8 @@ add_executable(${EXECUTABLE_NAME} #${SRCS}
         include/pdf/CosinePDF.cuh
         include/pdf/HittablePDF.cuh
         include/pdf/MixturePDF.cuh
+        include/material/Isotropic.cuh
+        include/hittable/ConstantMedium.cuh
 )
 
 if (WIN32)

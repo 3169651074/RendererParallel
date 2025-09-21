@@ -337,14 +337,14 @@ namespace renderer {
 
         //变换
         const Transform transforms[] = {
-                //Transform(PrimitiveType::BOX, 0, boxes[0].constructBoundingBox(), boxes[0].centroid(), std::array<double, 3>{0.0, -15.0, 0.0}, std::array<double, 3>{130, 0.0, 65.0}/*, std::array<double, 3>{1.5, 1.5, 1.5}*/),
+                Transform(PrimitiveType::BOX, 0, boxes[0].constructBoundingBox(), boxes[0].centroid(), std::array<double, 3>{0.0, -15.0, 0.0}, std::array<double, 3>{130, 0.0, 65.0}/*, std::array<double, 3>{1.5, 1.5, 1.5}*/),
                 Transform(PrimitiveType::BOX, 1, boxes[1].constructBoundingBox(), boxes[1].centroid(), std::array<double, 3>{0.0, 18.0, 0.0}, std::array<double, 3>{265.0, 0.0, 295.0}/*, std::array<double, 3>{1.5, 1.5, 1.5}*/)
         };
 
         //直接重要性采样物体列表，引用已存在的图元对象，无需重新创建
         const std::pair<PrimitiveType, size_t> directSampleList[] = {
                 {PrimitiveType::PARALLELOGRAM, 5}
-                ,{PrimitiveType::SPHERE, 0}
+                //,{PrimitiveType::SPHERE, 0}
         };
 
         renderer.commitSceneData(
@@ -352,7 +352,8 @@ namespace renderer {
                 metals, arrayLengthOnPos(metals),
                 dielectrics, arrayLengthOnPos(dielectrics),
                 diffuseLights, arrayLengthOnPos(diffuseLights),
-                spheres, arrayLengthOnPos(spheres),
+                //spheres, arrayLengthOnPos(spheres),
+                nullptr, 0,
                 nullptr, 0,
                 parallelograms, arrayLengthOnPos(parallelograms),
                 boxes, arrayLengthOnPos(boxes),
