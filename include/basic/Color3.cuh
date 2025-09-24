@@ -142,6 +142,20 @@ namespace renderer {
             pixelPointer[0] = b_byte;
         }
 
+        __device__ uchar4 castColor() const {
+            const double power = 1.0 / 2.0;
+            const double r = std::pow(elements[0], power);
+            const double g = std::pow(elements[1], power);
+            const double b = std::pow(elements[2], power);
+
+            const Range intensity(0.0, 0.999);
+            const auto r_byte = static_cast<Uint8>(256 * intensity.clamp(r));
+            const auto g_byte = static_cast<Uint8>(256 * intensity.clamp(g));
+            const auto b_byte = static_cast<Uint8>(256 * intensity.clamp(b));
+
+            return make_uchar4(r_byte, g_byte, b_byte, 255);
+        }
+
         // ====== 静态操作函数 ======
 
         //生成随机颜色，主机函数

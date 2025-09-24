@@ -153,4 +153,38 @@ namespace renderer {
         //写入到缓冲区
         result.writeColor((Uint8*)(dev_pixelBuffer + pixelIndex));
     }
+
+    __global__ void renderToSurface(const Renderer * dev_renderer, const Camera * dev_cam, cudaSurfaceObject_t surfaceObject, curandState * dev_stateArray) {
+        //当前线程对应的全局像素坐标
+        const Uint32 x = blockIdx.x * blockDim.x + threadIdx.x;
+        const Uint32 y = blockIdx.y * blockDim.y + threadIdx.y;
+        const Uint32 pixelIndex = gridDim.x * blockDim.x * y + x;
+
+        if (x >= dev_cam->windowWidth || y >= dev_cam->windowHeight) return;
+
+        curandState * threadState = dev_stateArray + pixelIndex;
+        Color3 result;
+
+        //抗锯齿采样
+        for (size_t sampleI = 0; sampleI < dev_cam->sqrtSampleCount; sampleI++) {
+            for (size_t sampleJ = 0; sampleJ < dev_cam->sqrtSampleCount; sampleJ++) {
+                const double offsetX = ((static_cast<double>(sampleJ) + randomDoubleDevice(threadState)) * dev_cam->reciprocalSqrtSampleCount) - 0.5;
+                const double offsetY = ((static_cast<double>(sampleI) + randomDoubleDevice(threadState)) * dev_cam->reciprocalSqrtSampleCount) - 0.5;
+                const Point3 samplePoint =
+                        dev_cam->pixelOrigin + ((x + offsetX) * dev_cam->viewPortPixelDx) + ((y + offsetY) * dev_cam->viewPortPixelDy);
+
+                //构造光线
+                const Ray ray = constructRay(dev_cam, samplePoint, threadState);
+
+                //发射光线
+                result += rayColor(dev_renderer, dev_cam, &ray, threadState);
+            }
+        }
+
+        //取平均值
+        result *= dev_cam->reciprocalSqrtSampleCount * dev_cam->reciprocalSqrtSampleCount;
+
+        //写入到缓冲区
+        surf2Dwrite(result.castColor(), surfaceObject, x * sizeof(uchar4), y);
+    }
 }

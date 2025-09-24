@@ -260,6 +260,231 @@ namespace renderer {
         }
     }
 
+    void Renderer::renderInteractive(Camera * cam, SDL_Window * window) const {
+        if (!devPointerAvailable) {
+            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Device pointers not available!");
+            return;
+        }
+        int w, h;
+        SDL_GetWindowSize(window, &w, &h);
+        SDL_DestroyWindow(window);
+
+        window = SDL_CreateWindow("Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                  w, h, SDL_WINDOW_OPENGL);
+        SDL_GLContext context = SDL_GL_CreateContext(window);
+
+        if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+            SDL_Log("Failed to init glad");
+            return;
+        }
+        glViewport(0, 0, w, h);
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        float vertices[] = {
+                -1.0f,  1.0f,  0.0f, 1.0f, // Top-left
+                -1.0f, -1.0f,  0.0f, 0.0f, // Bottom-left
+                1.0f, -1.0f,  1.0f, 0.0f, // Bottom-right
+                1.0f,  1.0f,  1.0f, 1.0f  // Top-right
+        };
+        Uint32 indices[] = {
+                0, 1, 2,
+                0, 2, 3
+        };
+        GLuint VAO, VBO, EBO;
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        const char* vertexShaderSource = R"(
+            #version 330 core
+            layout (location = 0) in vec2 aPos;
+            layout (location = 1) in vec2 aTexCoord;
+            out vec2 TexCoord;
+            void main() {
+                gl_Position = vec4(aPos, 0.0, 1.0);
+                TexCoord = aTexCoord;
+            }
+        )";
+
+        const char* fragmentShaderSource = R"(
+            #version 330 core
+            out vec4 FragColor;
+            in vec2 TexCoord;
+            uniform sampler2D ourTexture;
+            void main() {
+                FragColor = texture(ourTexture, TexCoord);
+            }
+        )";
+        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+        glCompileShader(vertexShader);
+        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+        glCompileShader(fragmentShader);
+        GLuint shaderProgram = glCreateProgram();
+        glAttachShader(shaderProgram, vertexShader);
+        glAttachShader(shaderProgram, fragmentShader);
+        glLinkProgram(shaderProgram);
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+        cudaGraphicsResource_t cudaResource;
+        cudaGraphicsGLRegisterImage(&cudaResource, textureID, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
+
+        Renderer * dev_renderer;
+        cudaCheckError(cudaMalloc(&dev_renderer, sizeof(Renderer)));
+        cudaCheckError(cudaMemcpy(dev_renderer, this, sizeof(Renderer), cudaMemcpyHostToDevice));
+        Camera * dev_camera;
+        cudaCheckError(cudaMalloc(&dev_camera, sizeof(Camera)));
+
+        const dim3 blocks(cam->windowWidth % 16 == 0 ? cam->windowWidth / 16 : cam->windowWidth / 16 + 1,
+                          cam->windowHeight % 16 == 0 ? cam->windowHeight / 16 : cam->windowHeight / 16 + 1, 1);
+        const dim3 threads(16, 16, 1);
+        const size_t pixelCount = w * h;
+        curandState * dev_stateArray;
+        cudaCheckError(cudaMalloc(&dev_stateArray, pixelCount * sizeof(curandState)));
+        initThreadRandom<<<blocks, threads>>>(dev_stateArray);
+        cudaCheckError(cudaDeviceSynchronize());
+
+        bool quit = false;
+        SDL_Event e;
+        std::array<double, 3> centerShift = {};
+        std::array<double, 3> targetShift = {};
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+
+        while (!quit) {
+            while (SDL_PollEvent(&e) != 0) {
+                if (e.type == SDL_QUIT) {
+                    quit = true;
+                }
+                
+                if (e.type == SDL_KEYDOWN) {
+                    const SDL_Keycode keycode = e.key.keysym.sym;
+                    switch (keycode) {
+                        case SDLK_a:
+                            centerShift[0] = 0.1;
+                            targetShift[0] = 0.1;
+                            break;
+                        case SDLK_d:
+                            centerShift[0] = -0.1;
+                            targetShift[0] = -0.1;
+                            break;
+                        case SDLK_w:
+                            centerShift[2] = -0.1;
+                            targetShift[2] = -0.1;
+                            break;
+                        case SDLK_s:
+                            centerShift[2] = 0.1;
+                            targetShift[2] = 0.1;
+                            break;
+                        case SDLK_SPACE:
+                            centerShift[1] = 0.1;
+                            targetShift[1] = 0.1;
+                            break;
+                        case SDLK_LSHIFT:
+                            centerShift[1] = -0.1;
+                            targetShift[1] = -0.1;
+                            break;
+                        default:;
+                    }
+                }
+                if (e.type == SDL_KEYUP) {
+                    centerShift[0] = targetShift[0] = 0.0;
+                    centerShift[1] = targetShift[1] = 0.0;
+                    centerShift[2] = targetShift[2] = 0.0;
+                }
+                if (e.type == SDL_MOUSEBUTTONDOWN) {
+                    if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+                        SDL_SetRelativeMouseMode(SDL_FALSE);
+                        targetShift[1] = 0.0;
+                    } else {
+                        SDL_SetRelativeMouseMode(SDL_TRUE);
+                    }
+                }
+                if (e.type == SDL_MOUSEMOTION && SDL_GetRelativeMouseMode() == SDL_TRUE) {
+                    int dx = e.motion.xrel;
+                    int dy = e.motion.yrel;
+                    targetShift[1] = dy / -100.0;
+
+                    Vec3 direction = Point3::constructVector(cam->cameraCenter, cam->cameraTarget);
+                    double angle = (double)dx * -1e-3;
+                    double currentDirX = direction[0];
+                    double currentDirZ = direction[2];
+                    direction[0] = currentDirX * cos(angle) - currentDirZ * sin(angle);
+                    direction[2] = currentDirX * sin(angle) + currentDirZ * cos(angle);
+                    cam->cameraTarget = cam->cameraCenter + direction;
+                }
+                cam->shiftCameraPosition(centerShift, targetShift);
+                cudaCheckError(cudaMemcpy(dev_camera, cam, sizeof(Camera), cudaMemcpyHostToDevice));
+            }
+
+            // --- CUDA 计算阶段 ---
+            // a. 映射资源，让CUDA接管纹理
+            cudaGraphicsMapResources(1, &cudaResource, nullptr);
+
+            // b. 获取指向纹理的CUDA数组
+            cudaArray_t cudaTextureArray;
+            cudaGraphicsSubResourceGetMappedArray(&cudaTextureArray, cudaResource, 0, 0);
+
+            // c. 为CUDA数组创建一个 Surface Object，以便核函数写入
+            cudaResourceDesc resDesc {};
+            memset(&resDesc, 0, sizeof(resDesc));
+            resDesc.resType = cudaResourceTypeArray;
+            resDesc.res.array.array = cudaTextureArray;
+            cudaSurfaceObject_t surfaceObject;
+            cudaCreateSurfaceObject(&surfaceObject, &resDesc);
+
+            // d. 启动核函数
+            renderToSurface<<<blocks, threads>>>(dev_renderer, dev_camera, surfaceObject, dev_stateArray);
+
+            // e. 销毁 Surface Object
+            cudaDestroySurfaceObject(surfaceObject);
+
+            // f. 解除映射，将纹理控制权还给OpenGL
+            cudaGraphicsUnmapResources(1, &cudaResource, nullptr);
+
+            // --- OpenGL 渲染阶段 ---
+            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            glUseProgram(shaderProgram);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+            SDL_GL_SwapWindow(window);
+        }
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+
+        cudaGraphicsUnregisterResource(cudaResource);
+
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+        glDeleteProgram(shaderProgram);
+        glDeleteTextures(1, &textureID);
+
+        SDL_GL_DeleteContext(context);
+
+        cudaCheckError(cudaFree(dev_camera));
+        cudaCheckError(cudaFree(dev_renderer));
+    }
+
     void Renderer::printDeviceInfo() {
         SDL_Log("Querying devices...");
 

@@ -71,6 +71,8 @@ namespace renderer {
         //主渲染函数：传入和当前帧信息（相机对象），并将结果写入传入的窗口后更新画面
         void renderFrame(const Camera * cam, SDL_Window * window, bool isPrintInfo = true) const;
 
+        void renderInteractive(Camera * cam, SDL_Window * window) const;
+
         //打印cuda设备信息
         static void printDeviceInfo();
     };
@@ -82,6 +84,8 @@ namespace renderer {
 
     //主渲染核函数
     __global__ void render(const Renderer * dev_renderer, const Camera * dev_cam, Uint32 * dev_pixelBuffer, curandState * dev_stateArray);
+
+    __global__ void renderToSurface(const Renderer * dev_renderer, const Camera * dev_cam, cudaSurfaceObject_t surfaceObject, curandState * dev_stateArray);
 }
 
 #endif //RENDERERPARALLEL_RENDER_CUH

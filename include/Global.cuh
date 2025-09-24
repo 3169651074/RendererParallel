@@ -1,6 +1,9 @@
 #ifndef RENDERERPARALLEL_GLOBAL_CUH
 #define RENDERERPARALLEL_GLOBAL_CUH
 
+#include <api/glad.h>
+#include <cuda_gl_interop.h>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 

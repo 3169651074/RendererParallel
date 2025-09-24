@@ -146,8 +146,8 @@ namespace renderer {
                 WINDOW_WIDTH, WINDOW_HEIGHT,
                 Color3(0.7, 0.8, 0.9),
                 Point3(0.0, 2.0, 10.0), Point3(0.0, 2.0, 0.0),
-                80, 0.0, Range(0.0, 1.0), 100,
-                0.5, 10, Vec3(0.0, 1.0, 0.0)
+                80, 0.0, Range(0.0, 1.0), 1,
+                0.5, 10, Vec3(0.0, -1.0, 0.0)
         );
         SDL_Log("%s", cam.toString().c_str());
 
@@ -207,75 +207,75 @@ namespace renderer {
         renderer.setDirectSampleObject(directSampleList, arrayLengthOnPos(directSampleList));
 #endif
 
-        renderer.renderFrame(&cam, window);
+        renderer.renderInteractive(&cam, window);
         SDL_Delay(1000 * 2);
 
-//        SDL_Event event{};
-//        bool isQuit = false;
-//
-//        std::array<double, 3> centerShift = {};
-//        std::array<double, 3> targetShift = {};
-//
-//        SDL_SetRelativeMouseMode(SDL_TRUE); 开启相对鼠标模式（锁定+隐藏光标）
-//        while (!isQuit) {
-//            while (SDL_PollEvent(&event)) {
-//                if (event.type == SDL_QUIT) isQuit = true;
-//
-//                if (event.type == SDL_KEYDOWN) {
-//                    const SDL_Keycode keycode = event.key.keysym.sym;
-//                    switch (keycode) {
-//                        case SDLK_a:
-//                            centerShift[0] = -0.1;
-//                            targetShift[0] = -0.1;
-//                            break;
-//                        case SDLK_d:
-//                            centerShift[0] = 0.1;
-//                            targetShift[0] = 0.1;
-//                            break;
-//                        case SDLK_w:
-//                            centerShift[2] = -0.1;
-//                            targetShift[2] = -0.1;
-//                            break;
-//                        case SDLK_s:
-//                            centerShift[2] = 0.1;
-//                            targetShift[2] = 0.1;
-//                            break;
-//                        case SDLK_SPACE:
-//                            centerShift[1] = 0.1;
-//                            targetShift[1] = 0.1;
-//                            break;
-//                        case SDLK_LSHIFT:
-//                            centerShift[1] = -0.1;
-//                            targetShift[1] = -0.1;
-//                            break;
-//                        default:;
-//                    }
-//                }
-//
-//                if (event.type == SDL_KEYUP) {
-//                    centerShift[0] = targetShift[0] = 0.0;
-//                    centerShift[1] = targetShift[1] = 0.0;
-//                    centerShift[2] = targetShift[2] = 0.0;
-//                }
-//
-//                if (event.type == SDL_MOUSEBUTTONDOWN) {
-//                    if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
-//                        SDL_SetRelativeMouseMode(SDL_FALSE);
-//                        targetShift[1] = 0.0;
-//                    } else {
-//                        SDL_SetRelativeMouseMode(SDL_TRUE);
-//                    }
-//                }
-//
-//                if (event.type == SDL_MOUSEMOTION && SDL_GetRelativeMouseMode() == SDL_TRUE) {
-//                    int dx = event.motion.xrel; // 水平方向位移
-//                    int dy = event.motion.yrel; // 竖直方向位移
-//                    targetShift[1] = dy / -100.0;
-//                }
-//                cam.shiftCameraPosition(centerShift, targetShift);
-//            }
-//            renderer.renderFrame(&cam, window, false);
-//        }
+/*        SDL_Event event{};
+        bool isQuit = false;
+
+        std::array<double, 3> centerShift = {};
+        std::array<double, 3> targetShift = {};
+
+        SDL_SetRelativeMouseMode(SDL_TRUE); 开启相对鼠标模式（锁定+隐藏光标）
+        while (!isQuit) {
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) isQuit = true;
+
+                if (event.type == SDL_KEYDOWN) {
+                    const SDL_Keycode keycode = event.key.keysym.sym;
+                    switch (keycode) {
+                        case SDLK_a:
+                            centerShift[0] = -0.1;
+                            targetShift[0] = -0.1;
+                            break;
+                        case SDLK_d:
+                            centerShift[0] = 0.1;
+                            targetShift[0] = 0.1;
+                            break;
+                        case SDLK_w:
+                            centerShift[2] = -0.1;
+                            targetShift[2] = -0.1;
+                            break;
+                        case SDLK_s:
+                            centerShift[2] = 0.1;
+                            targetShift[2] = 0.1;
+                            break;
+                        case SDLK_SPACE:
+                            centerShift[1] = 0.1;
+                            targetShift[1] = 0.1;
+                            break;
+                        case SDLK_LSHIFT:
+                            centerShift[1] = -0.1;
+                            targetShift[1] = -0.1;
+                            break;
+                        default:;
+                    }
+                }
+
+                if (event.type == SDL_KEYUP) {
+                    centerShift[0] = targetShift[0] = 0.0;
+                    centerShift[1] = targetShift[1] = 0.0;
+                    centerShift[2] = targetShift[2] = 0.0;
+                }
+
+                if (event.type == SDL_MOUSEBUTTONDOWN) {
+                    if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+                        SDL_SetRelativeMouseMode(SDL_FALSE);
+                        targetShift[1] = 0.0;
+                    } else {
+                        SDL_SetRelativeMouseMode(SDL_TRUE);
+                    }
+                }
+
+                if (event.type == SDL_MOUSEMOTION && SDL_GetRelativeMouseMode() == SDL_TRUE) {
+                    int dx = event.motion.xrel; // 水平方向位移
+                    int dy = event.motion.yrel; // 竖直方向位移
+                    targetShift[1] = dy / -100.0;
+                }
+                cam.shiftCameraPosition(centerShift, targetShift);
+            }
+            renderer.renderFrame(&cam, window, false);
+        }*/
 
         renderer.freeSceneData();
         releaseSDLResourcesImpl();

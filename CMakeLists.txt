@@ -2,23 +2,14 @@
 #在Linux上需要添加编译参数-DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.9/bin/nvcc
 cmake_minimum_required(VERSION 3.31)
 set(EXECUTABLE_NAME "RendererParallel")
-project(${EXECUTABLE_NAME} LANGUAGES CUDA)
+project(${EXECUTABLE_NAME} LANGUAGES C CXX CUDA)
 
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CUDA_STANDARD 20)
 
 #自动检测本机 CUDA 架构
 #set(CMAKE_CUDA_ARCHITECTURES NATIVE)
-
-#尝试通过 nvcc 查询支持的 CUDA 架构
-#execute_process(
-#    COMMAND ${CMAKE_CUDA_COMPILER} --help
-#    OUTPUT_VARIABLE CUDA_HELP
-#)
-#string(REGEX MATCHALL "compute_[0-9]+" COMPUTE_CAPABILITIES "${CUDA_HELP}")
-#string(REPLACE "compute_" "" CUDA_ARCH_LIST "${COMPUTE_CAPABILITIES}")
-##设置检测到的架构
-#set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_LIST})
-#message(STATUS "Detected CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}")
 
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin")
 #set(LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/lib")
@@ -71,6 +62,7 @@ add_executable(${EXECUTABLE_NAME} #${SRCS}
         include/pdf/MixturePDF.cuh
         include/material/Isotropic.cuh
         include/hittable/ConstantMedium.cuh
+        src/api/glad.c
 )
 
 if (WIN32)
