@@ -152,6 +152,32 @@ namespace renderer {
             Vec3 ret(*this); ret.unitize(); return ret;
         }
 
+        //返回当前向量绕axis轴旋转angle角度后的结果，使用罗德里格旋转公式实现
+        __host__ __device__ Vec3 rotate(const Vec3 & axis, double angle) const {
+            //罗德里格公式要求旋转轴是单位向量，所以先进行归一化
+            Vec3 k = axis.unitVector();
+
+            //预计算三角函数值
+            const double cos_theta = cos(angle);
+            const double sin_theta = sin(angle);
+
+            //v 是当前向量，即 *this
+            const Vec3 & v = *this;
+
+            //根据罗德里格公式计算三个部分
+            //part1: v * cos(theta)
+            Vec3 part1 = v * cos_theta;
+
+            //part2: (k x v) * sin(theta)
+            Vec3 part2 = k.cross(v) * sin_theta;
+
+            //part3: k * (k . v) * (1 - cos(theta))
+            Vec3 part3 = k * k.dot(v) * (1 - cos_theta);
+
+            //将三部分相加得到最终的旋转后向量
+            return part1 + part2 + part3;
+        }
+
         // ====== 静态操作函数 ======
 
         //生成遵守按指定轴余弦分布的随机向量，非单位向量，主机版本

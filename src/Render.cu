@@ -363,75 +363,132 @@ namespace renderer {
 
         bool quit = false;
         SDL_Event e;
-        std::array<double, 3> centerShift = {};
-        std::array<double, 3> targetShift = {};
         SDL_SetRelativeMouseMode(SDL_TRUE);
 
+        //键盘状态需要跨帧使用，需要定义在帧循环外部
+        bool key_w_pressed = false;
+        bool key_a_pressed = false;
+        bool key_s_pressed = false;
+        bool key_d_pressed = false;
+        bool key_space_pressed = false;
+        bool key_lshift_pressed = false;
+
         while (!quit) {
+            int dx = 0;
+            int dy = 0;
+            Point3 newCameraCenter = cam->cameraCenter;
+            Point3 newCameraTarget = cam->cameraTarget;
+
+            //接收事件，更新以上状态变量，状态驱动与关注点分离
             while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) {
                     quit = true;
+                    break;
                 }
-                
                 if (e.type == SDL_KEYDOWN) {
-                    const SDL_Keycode keycode = e.key.keysym.sym;
-                    switch (keycode) {
-                        case SDLK_a:
-                            centerShift[0] = 0.1;
-                            targetShift[0] = 0.1;
-                            break;
-                        case SDLK_d:
-                            centerShift[0] = -0.1;
-                            targetShift[0] = -0.1;
-                            break;
-                        case SDLK_w:
-                            centerShift[2] = -0.1;
-                            targetShift[2] = -0.1;
-                            break;
-                        case SDLK_s:
-                            centerShift[2] = 0.1;
-                            targetShift[2] = 0.1;
-                            break;
-                        case SDLK_SPACE:
-                            centerShift[1] = 0.1;
-                            targetShift[1] = 0.1;
-                            break;
-                        case SDLK_LSHIFT:
-                            centerShift[1] = -0.1;
-                            targetShift[1] = -0.1;
-                            break;
-                        default:;
+                    switch (e.key.keysym.sym) {
+                        case SDLK_w: key_w_pressed = true; break;
+                        case SDLK_a: key_a_pressed = true; break;
+                        case SDLK_s: key_s_pressed = true; break;
+                        case SDLK_d: key_d_pressed = true; break;
+                        case SDLK_SPACE: key_space_pressed = true; break;
+                        case SDLK_LSHIFT: key_lshift_pressed = true; break;
                     }
                 }
                 if (e.type == SDL_KEYUP) {
-                    centerShift[0] = targetShift[0] = 0.0;
-                    centerShift[1] = targetShift[1] = 0.0;
-                    centerShift[2] = targetShift[2] = 0.0;
-                }
-                if (e.type == SDL_MOUSEBUTTONDOWN) {
-                    if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
-                        SDL_SetRelativeMouseMode(SDL_FALSE);
-                        targetShift[1] = 0.0;
-                    } else {
-                        SDL_SetRelativeMouseMode(SDL_TRUE);
+                    switch (e.key.keysym.sym) {
+                        case SDLK_w: key_w_pressed = false; break;
+                        case SDLK_a: key_a_pressed = false; break;
+                        case SDLK_s: key_s_pressed = false; break;
+                        case SDLK_d: key_d_pressed = false; break;
+                        case SDLK_SPACE: key_space_pressed = false; break;
+                        case SDLK_LSHIFT: key_lshift_pressed = false; break;
                     }
                 }
-                if (e.type == SDL_MOUSEMOTION && SDL_GetRelativeMouseMode() == SDL_TRUE) {
-                    int dx = e.motion.xrel;
-                    int dy = e.motion.yrel;
-                    targetShift[1] = dy / -100.0;
-
-                    Vec3 direction = Point3::constructVector(cam->cameraCenter, cam->cameraTarget);
-                    double angle = (double)dx * -1e-3;
-                    double currentDirX = direction[0];
-                    double currentDirZ = direction[2];
-                    direction[0] = currentDirX * cos(angle) - currentDirZ * sin(angle);
-                    direction[2] = currentDirX * sin(angle) + currentDirZ * cos(angle);
-                    cam->cameraTarget = cam->cameraCenter + direction;
+                if (e.type == SDL_MOUSEBUTTONDOWN) {
+                    SDL_SetRelativeMouseMode(SDL_GetRelativeMouseMode() == SDL_TRUE ? SDL_FALSE : SDL_TRUE);
                 }
-                cam->shiftCameraPosition(centerShift, targetShift);
-                cudaCheckError(cudaMemcpy(dev_camera, cam, sizeof(Camera), cudaMemcpyHostToDevice));
+                if (e.type == SDL_MOUSEMOTION && SDL_GetRelativeMouseMode() == SDL_TRUE) {
+                    dx += e.motion.xrel;
+                    dy += e.motion.yrel;
+                }
             }
+            if (quit) { break; }
+
+            //鼠标移动
+            if (dx != 0 || dy != 0) {
+                dy = -dy;
+                constexpr double sensitivity = 0.001;
+                Vec3 viewDirection = Point3::constructVector(cam->cameraCenter, cam->cameraTarget);
+
+                //获取当前相机的方向向量
+                Vec3 W = cam->cameraW.unitVector();
+                Vec3 U = cam->cameraU.unitVector();
+                Vec3 V = cam->cameraV.unitVector();
+
+                //左右旋转 (Yaw)
+                //将视线向量(W) 绕着上方向量(V) 进行旋转，实现视角左右旋转
+                const double yawAngle = -dx * sensitivity;
+                W = W.rotate(V, yawAngle);
+
+                //上下旋转 (Pitch)
+                //将已经左右旋转过的视线向量(W) 绕着右方向量(U) 进行旋转
+                double pitchAngle = -dy * sensitivity;
+                W = W.rotate(U, pitchAngle);
+
+                //限制俯仰角超过限制
+                constexpr double PITCH_LIMIT = PI / 2.1;
+
+                //从已经左右旋转过的W向量中获取当前俯仰角
+                //W向量的Y分量是俯仰角(pitch)的正弦值，所以可以用asin来获取
+                double newPitch = std::asin(W[1]);
+
+                bool needsCorrection = false;
+                if (newPitch > PITCH_LIMIT) {
+                    newPitch = PITCH_LIMIT;
+                    needsCorrection = true;
+                } else if (newPitch < -PITCH_LIMIT) {
+                    newPitch = -PITCH_LIMIT;
+                    needsCorrection = true;
+                }
+                //如果超限了，就根据限制角度重新构建W向量
+                if (needsCorrection) {
+                    //获取水平方向
+                    const Vec3 horizontalDir = Vec3(W[0], 0.0, W[2]).unitVector();
+                    //用被钳制后的俯仰角 newPitch 重新计算W
+                    const double horizontalMagnitude = std::cos(newPitch);
+                    W = horizontalDir * horizontalMagnitude + Vec3(0.0, std::sin(newPitch), 0.0);
+                }
+                //更新目标点。鼠标移动只改变看向的位置
+                newCameraTarget = newCameraCenter + W * viewDirection.length();
+            }
+
+            //键盘按键
+            //合成总移动方向，支持同时按住两个键，斜向移动
+            constexpr double moveSpeed = 0.1;
+            Vec3 movementDirection;
+
+            //使得键盘按键总是在水平平面上移动，移除方向向量的竖直分量（区平面投影）
+            const Vec3 forwardHorizontal = Vec3(cam->cameraW[0], 0.0, cam->cameraW[2]).unitVector();
+            if (key_w_pressed) movementDirection += forwardHorizontal; // Forward
+            if (key_s_pressed) movementDirection -= forwardHorizontal; // Backward
+            if (key_d_pressed) movementDirection += cam->cameraU; // Right (Strafe)
+            if (key_a_pressed) movementDirection -= cam->cameraU; // Left (Strafe)
+
+            //上下移动（此处需要取反）
+            if (key_space_pressed) movementDirection -= cam->upDirection;  // Up
+            if (key_lshift_pressed) movementDirection += cam->upDirection; // Down
+
+            if (movementDirection.lengthSquare() > 0.0) {
+                //将移动方向向量的长度变为1。这确保了斜向移动（例如同时按W和D）的速度和直线移动的速度是一致的，避免了“斜走更快”的问题
+                const Vec3 translation = movementDirection.unitVector() * moveSpeed;
+                newCameraCenter += translation;
+                newCameraTarget += translation;
+            }
+
+            //设置新位置
+            cam->resetCameraPosition(newCameraCenter, newCameraTarget);
+            cudaCheckError(cudaMemcpy(dev_camera, cam, sizeof(Camera), cudaMemcpyHostToDevice));
 
             // --- CUDA 计算阶段 ---
             // a. 映射资源，让CUDA接管纹理
