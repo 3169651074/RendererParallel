@@ -1,35 +1,37 @@
+[简体中文](./README_CN.md)
+
 # RendererParallel
 A simple ray tracer implemented by pure CUDA, based on "RendererBuild" ray tracer implementation.
 
 ## Build
-此仓库中包含的源代码可直接在Windows和Linux上编译，确保NVIDA显卡驱动已经更新到最新版，并前往NVIDIA官网下载安装CUDA Toolkit。
+The source code included in this repository can be compiled directly on Windows and Linux. Ensure that the NVIDIA graphics driver is updated to the latest version and download/install the CUDA Toolkit from the NVIDIA official website.
 
 ### Windows
-1. 无论使用什么工具编译，在Windows上编译CUDA必须使用MSVC编译器，因此需要确保Visual Studio已经安装，可以使用Visual Studio Installer查看工具集的安装情况。 
-确保“使用C++的桌面开发”工具包以及此工具包右侧列表中“用于Windows的C++ CMake工具”、Windows 10/11 SDK已安装。建议将所有工具包更新到最新版。
+1. Regardless of the tool used for compilation, compiling CUDA on Windows requires the MSVC compiler. Therefore, ensure that Visual Studio is installed. You can use the Visual Studio Installer to check the installation of the toolsets.
+Ensure that the "Desktop development with C++" workload, as well as "C++ CMake tools for Windows" and the Windows 10/11 SDK in the list on the right side of this workload, are installed. It is recommended to update all toolsets to the latest version.
 
-2. 使用IDE编译（已经安装了Visual Studio，无需手动使用终端输入编译命令）
+2. Compiling with an IDE (Visual Studio installed, no need to manually enter compilation commands in the terminal)
 
 * Visual Studio  
-直接打开项目文件夹，将上方生成选项设置为RendererParallel，点击生成即可   
-如果CMake报错，则在上方“项目”菜单 -- > 删除缓存并重新配置
+Open the project folder directly, set the build option at the top to RendererParallel, and click Build.  
+If CMake reports an error, go to the "Project" menu at the top --> Delete Cache and Reconfigure.
 
 * CLion
-1. 点击左上角三个横线的按钮（Files）--> Settings --> Build, Execution, Deployment
-2. 选中Toolchains --> Visual Studio --> 将Architecture修改为“x86_amd64”。（注：如果遇到CMake报错，提示编译器无法编译测试文件，就是架构设置错误，不能选其他架构）
-3. 选中Toolchains下方的CMake，勾选“Reload CMake project on...”选项。
-4. 在下方的“Toolchain”中选择Visual Studio，将Generator设置为“Use Default（Ninja）”或手动指定为Ninja
-5. 关闭设置界面，点击IDE右上角的绿色三角形箭头即可编译运行
+1. Click the three horizontal lines button (Files) in the upper left corner --> Settings --> Build, Execution, Deployment.
+2. Select Toolchains --> Visual Studio --> Change Architecture to "x86_amd64". (Note: If you encounter a CMake error indicating the compiler cannot compile test files, it is due to an incorrect architecture setting; do not select other architectures).
+3. Select CMake under Toolchains and check the "Reload CMake project on..." option.
+4. Select Visual Studio in the "Toolchain" below and set Generator to "Use Default (Ninja)" or manually specify it as Ninja.
+5. Close the settings interface and click the green triangle arrow in the upper right corner of the IDE to compile and run.
 
 ### Ubuntu/Debian
-1.使用系统包管理器安装SDL2依赖库和GCC
+1. Use the system package manager to install SDL2 dependency libraries and GCC:
 ```
 sudo apt update && sudo apt install libsdl2-dev libsdl2-image-dev gcc g++
 ```
 
-2.使用CLion IDE构建
-1. 同Windows，打开Settings --> Build, Execution, Deployment --> CMake
-2. 在“Generator”下方的“CMake options”中指定nvcc的路径参数，具体取决于CUDA Toolkit的版本。示例：`-DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.9/bin/nvcc`。可以使用`whereis nvcc`命令查看实际安装位置
-3. Toolchain保持默认的GCC即可
+2. Building with CLion IDE:
+1. Same as Windows, open Settings --> Build, Execution, Deployment --> CMake.
+2. Specify the nvcc path parameter in "CMake options" under "Generator", depending on the version of the CUDA Toolkit. Example: `-DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.9/bin/nvcc`. You can use the `whereis nvcc` command to check the actual installation location.
+3. Keep the Toolchain as the default GCC.
 
-* 也可以直接在终端中使用CMake构建，注意传递CMAKE_CUDA_COMPILER参数即可
+* Project can be built directly in ternminal, but remember to pass CMAKE_CUDA_COMPILER argument.
